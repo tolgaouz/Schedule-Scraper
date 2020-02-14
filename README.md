@@ -1,6 +1,6 @@
 ## NodeJS Schedule Scraper Project for Upwork
 
-## Usage
+##  Usage
 
 - Clone the repo
 - Open up a terminal in the same directory
