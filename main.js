@@ -175,10 +175,11 @@ day = String(day);
             data['People Favorited'].push(tmp);
         });
         // If the event is a session
-    }else if (url_data['Event Type'].includes('Session')) {
+    }else if (url_data['Event Type'].includes('Session') || url_data['Event Type'].includes('Special Event')) {
         data['Title'] = $('h1.event-name').text();
         data['Link'] = url_data['URL'];
         data['Event Type'] = 'Session';
+        if(url_data['Event Type'].includes('Special Event')) data['Event Type'] = 'Special Event'
         data['Speakers'] = [];
         data['Date'] = $('div.event-date').text().split('|')[0].trim();
         data['Time'] = $('div.event-date').text().split('|')[1].trim();
@@ -219,6 +220,42 @@ day = String(day);
     $('div.row description > div.large-4 > div.row').each((idx, el) => {
         data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
     });
+    }else{
+        data['Title'] = $('h1.event-name').text();
+        data['Link'] = url_data['URL'];
+        data['Event Type'] = 'Exhibition';
+        data['Venue'] = $('.venue-title').text();
+        data['Date'] = $('div.event-date').text().split('|')[0].trim();
+        data['Time'] = $('div.event-date').text().split('|')[1].trim();
+        data['Venue Size'] = $('div.venue-size').text();
+        data['Venue Address'] = $('div.venue-address').text();
+        // get tags
+        let tags = [];
+        $('.event-tags').find('a.tag').each((idx, el) => {
+            tags.push($(el).text());
+        });
+        data['Tags'] = tags;
+        data['Description'] = $('.description').find('div.large-8').text();
+        $('div.row description > div.large-4 > div.row').each((idx, el) => {
+            data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
+        });
+        // People also favorited part
+        data['People Favorited'] = [];
+        $('div.related-event').each((idx,el)=>{
+            let tmp = {};
+            // People also favorited links ar designed in this way
+            // Title of the event + 'AT' + Venue
+            let full_text = $(el).find('div.small-10 > div.row > div.event-details').text().split('AT');
+            let title = full_text[0];
+            let venue = full_text[1];
+            tmp['Title'] = title;
+            tmp['Venue'] = venue;
+            // Link of the specific event
+            tmp['Link'] = base_url+$(el).find('div.small-10 > div.row > div.event-details > a')[0].attribs['href'];
+            tmp['Date'] = $(el).find('div.thumbnail').children('small').find('.date').text();
+            tmp['Time'] = $(el).find('div.thumbnail').children('small').find('.time').text();
+            data['People Favorited'].push(tmp);
+        });
     }
     return data    
 }).catch(e=>{
