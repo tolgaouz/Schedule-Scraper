@@ -9,7 +9,7 @@ const fs = require('fs');
   const page = await browser.newPage();
 
   await page.goto('https://schedule.sxsw.com/2020/films');
-  const urls = await page.evaluate(()=>{
+  const film_urls = await page.evaluate(()=>{
     let events = document.getElementsByClassName('row single-event');
     let urls = [];
     for(var i=0;i<events.length;i++){
@@ -17,7 +17,22 @@ const fs = require('fs');
     }
     return urls
   });
-   const get_result = (urls) => 
+
+  await page.goto('https://schedule.sxsw.com/2020/events/type/showcase?days=all');
+  const showcase_urls = await page.evaluate(()=>{
+    let events = document.getElementsByClassName('row single-event');
+    let urls = [];
+    for(var i=0;i<events.length;i++){
+        urls.push(events[i].getElementsByTagName('div')[0].getElementsByTagName('a')[0].href);
+    }
+    return urls
+  });
+
+
+  // Function below will be used for general scraping
+  // Will return different data based on which url set is given
+  
+   const get_data = (urls) => 
    { return Promise.all(urls.map(async (url) => {
     // Options for request-promise function
     var options = {
@@ -96,13 +111,20 @@ const fs = require('fs');
     }
     return screening
     }).catch(e=>{
+        console.log(e)
         return 'URL can not be reached'
     })
     return await out 
     }))};
 
-    // output to a json file
-    const data = await get_result(urls);
-    console.log(data);  
+ // output to a json file
+    const films_data = await get_data(film_urls).then((val) =>{
+        var data = JSON.stringify(val);
+        fs.writeFile('data.json', data, function(err, result) {
+            if(err) console.log('error', err);
+          });
+    });
+
+
   await browser.close();
 })();
