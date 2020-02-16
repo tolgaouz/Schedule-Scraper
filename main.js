@@ -5,7 +5,7 @@ const fs = require('fs');
 const fetch = require("node-fetch");
 const pLimit = require('p-limit');
 
-// Example Concurrency of 3 promise at once
+// Concurrency of 30 promise at once
 const limit = pLimit(30);
  
 let day = parseInt(process.argv[2]);
