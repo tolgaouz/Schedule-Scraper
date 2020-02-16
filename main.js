@@ -57,6 +57,10 @@ day = String(day);
         .then((json) => {
          resolve(json['total'])
         })
+        .catch(err =>{
+            console.log(err)
+            reject('-1')
+        })
         })}
     }
 
@@ -158,7 +162,7 @@ day = String(day);
             });
             data['Tags'] = tags;
             data['Description'] = $('.description').find('div.large-8').text();
-            $('div.row description > div.large-4 > div.row').each((idx, el) => {
+            $('div.description > div.large-4').find('div.row').each((idx, el) => {
                 data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
             });
             // People also favorited part
@@ -223,7 +227,7 @@ day = String(day);
                 data['People Favorited'].push(tmp);
             });
         data['Description'] = $('.description').find('div.large-8').text();
-        $('div.row description > div.large-4 > div.row').each((idx, el) => {
+        $('div.description').find('div.large-4').find('div.row').each((idx, el) => {
             data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
         });
         }else if(url_data['Event Type'].includes('Showcase')){
@@ -263,7 +267,8 @@ day = String(day);
             });
             data['Tags'] = tags;
             data['Description'] = $('.description').find('div.large-8').text();
-            $('div.row description > div.large-4 > div.row').each((idx, el) => {
+          
+            $('div.description > div.large-4').find('div.row').each((idx, el) => {
                 data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
             });
             // People also favorited part
