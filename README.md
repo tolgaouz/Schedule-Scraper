@@ -1,6 +1,7 @@
 ## NodeJS Schedule Scraper Project for Upwork
 
-## Warning: This is a project made on a request for a client on Upwork. Scrapes he event schedule of https://schedule.sxsw.com/2020/03/19/events for each day.
+# Warning
+- This is a project made on a request for a client on Upwork. Scrapes he event schedule of https://schedule.sxsw.com/2020/03/19/events for each day.
 
 ##  Usage
 
