@@ -7,6 +7,7 @@ const pLimit = require('p-limit');
 
 // Concurrency of 30 promise at once
 const limit = pLimit(30);
+const fav_limit = pLimit(10);
  
 let day = parseInt(process.argv[2]);
   if(!(day>=13 && day<=22)){
@@ -17,7 +18,12 @@ day = String(day);
 
 (async () => {
   console.log('Script initiating..')
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ args: [
+    '--no-sandbox',
+    '--headless',
+    '--disable-gpu',
+    '--window-size=1920x1080',
+  ] });
   const page = await browser.newPage();
   const base_url = 'https://schedule.sxsw.com';
   await page.goto('https://schedule.sxsw.com/2020/03/'+day+'/events');
@@ -34,9 +40,10 @@ day = String(day);
     return data
   });
 
-  console.log('Total of'+urls_data.length+' URLs will be scraped with 70 concurrent connections each time.')
+  console.log('Total of '+urls_data.length+' URLs will be scraped with 70 concurrent connections each time.')
 
   // A function to make API Requests to get Favorite Counts on individual events
+  // OLD FUNCTION FOR GETTING FAV COUNTS
   const get_favs = async (event_url,event_type) => {
     if(event_type.includes('Session')){
       return new Promise( async(resolve,reject) => {
@@ -53,16 +60,47 @@ day = String(day);
         "mode": "cors"
         // get the response text
         })
-        result.then((response) => response.json())
+        result.then((response) => {
+            try{
+            response.json()
+            }catch(err){
+                resolve(-1)
+            }
+        })
         .then((json) => {
-         resolve(json['total'])
+         if(json) resolve(json['total'])
         })
         .catch(err =>{
             console.log(err)
-            reject('-1')
+            console.log('wrong')
+            reject(-1)
         })
         })}
     }
+    // New function to get fav counts using headless browser
+    const get_favs_pup = async (event) =>{
+        if(event['Event Type'].includes('Session')){
+            return new Promise( async(resolve,reject) => {
+                let pg = await browser.newPage();
+                await pg.goto(event['Link'])
+                console.log(event['Link'])
+                pg.waitForSelector('section > div.content > h3').then(async ()=>{
+                    let favs = await pg.evaluate(()=>{
+                        return document.getElementsByClassName('whos-interested')[0].getElementsByTagName('h3')[0].textContent;
+                    })
+                    var regExp = /\(([^)]+)\)/;
+                    favs = favs.match(regExp)
+                    event['Favorite Count'] = favs[1]
+                    resolve(event)
+                    await pg.close()
+                }).catch(async (err)=>{
+                    event['Favorite Count'] = 'Not Found'
+                    resolve(event)
+                    await pg.close()
+                })
+    })}else{
+        return event
+    }}
 
     const promiseProducer = async (url_data) => {
         console.log('Scraping ->'+url_data['URL'])
@@ -141,7 +179,7 @@ day = String(day);
                 // Entry + Movie Info Section
                 $('div.screening-info > div.large-4 > div.row').each((idx, el) => {
                     // Find b tags, get their text, replace : and trim just in case there are any spaces
-                    data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
+                    data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '').trim();
                 });
         // If the event is an exhibition
         }else if (url_data['Event Type'].includes('Exhibition')) {
@@ -149,12 +187,12 @@ day = String(day);
             data['Link'] = url_data['URL'];
             data['Event Type'] = 'Exhibition';
             data['Venue'] = '';
-            $('.venue-title').find('a').each((i,el)=>{return $(el).text()+' '})
+            $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
             if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
             if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
-            if($('div.venue-size').exists()) data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
-            if($('div.venue-address').exists()) data['Venue Size'] = $('div.venue-address').text();
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Address'] = $('div.venue-address').text();
             // get tags
             let tags = [];
             $('.event-tags').find('a.tag').each((idx, el) => {
@@ -163,7 +201,7 @@ day = String(day);
             data['Tags'] = tags;
             data['Description'] = $('.description').find('div.large-8').text();
             $('div.description > div.large-4').find('div.row').each((idx, el) => {
-                data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
+                data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '').trim();
             });
             // People also favorited part
             data['People Favorited'] = [];
@@ -192,10 +230,10 @@ day = String(day);
             if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
             if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
             data['Venue'] = '';
-            $('.venue-title').find('a').each((i,el)=>{return $(el).text()+' '})
+            $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
-            if($('div.venue-size').exists()) data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
-            if($('div.venue-address').exists()) data['Venue Size'] = $('div.venue-address').text();
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Address'] = $('div.venue-address').text();
             $('div.badge').each((idx,el)=>{
                 let tmp = {};
                 tmp['Link'] = base_url+$(el).children('a')[0].attribs['href'];
@@ -228,7 +266,7 @@ day = String(day);
             });
         data['Description'] = $('.description').find('div.large-8').text();
         $('div.description').find('div.large-4').find('div.row').each((idx, el) => {
-            data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '');
+            data[$(el).find('b').text().replace(':', '').trim()] = $(el).text().replace($(el).find('b').text(), '').trim();
         });
         }else if(url_data['Event Type'].includes('Showcase')){
             data['Title'] = $('h1.artist-name').text();
@@ -254,12 +292,12 @@ day = String(day);
             data['Link'] = url_data['URL'];
             data['Event Type'] = 'Exhibition';
             data['Venue'] = '';
-            $('.venue-title').find('a').each((i,el)=>{return $(el).text()+' '})
+            $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
             if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
             if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
-            if($('div.venue-size').exists()) data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
-            if($('div.venue-address').exists()) data['Venue Size'] = $('div.venue-address').text();
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Address'] = $('div.venue-address').text();
             // get tags
             let tags = [];
             $('.event-tags').find('a.tag').each((idx, el) => {
@@ -308,23 +346,45 @@ day = String(day);
  // TODO: add this 
     const data = await Promise.all(get_data)
 
+    const get_result_pup = data.map( dt => {
+        return fav_limit(()=>get_favs_pup(dt))
+    })
+
+    const result = await Promise.all(get_result_pup)
+
+    var last = JSON.stringify(result);
+    fs.writeFile(day+'-March.json', last, function(err, result) {
+        if(err){console.log('error', err)}else{console.log('file created successfully.')};
+        });
+
+
+    /* OLD WAY OF GETTING FAVORITE COUNTS 
     const get_result = (data) => { 
         return Promise.all(data.map(async (dt) => {
             if(dt != 'URL can not be reached'){
-            let fav_cnt = await get_favs(dt['Link'],dt['Event Type'])
-            console.log(fav_cnt)
-            dt['Favorite Count'] = fav_cnt
+                get_favs_2(dt['Link'],dt['Event Type']).then((resp)=>{
+                    console.log('here is the reuslt after this')
+                    console.log(resp)
+                    if(resp) dt['Favorite Count'] = resp
+                }).catch(err=>{
+                    console.log('CATCH SECOND')
+                    console.log(err)
+                })
             }
             return dt
         }))
     }
     get_result(data).then(resp=>{
+        console.log(resp)
         var data = JSON.stringify(resp);
         fs.writeFile(day+'-March.json', data, function(err, result) {
             if(err) console.log('error', err);
           });
+    }).catch(err=>{
+        console.log(err)
     })
 
+    */
 
   await browser.close();
 })();
