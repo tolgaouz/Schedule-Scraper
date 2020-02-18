@@ -189,8 +189,8 @@ day = String(day);
             data['Venue'] = '';
             $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
-            if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
-            if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
+            data['Date'] = $('div.event-date').text().split('|')[0].trim();
+            data['Time'] = $('div.event-date').text().split('|')[1].trim();
             data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
             data['Venue Address'] = $('div.venue-address').text();
             // get tags
@@ -227,8 +227,8 @@ day = String(day);
             data['Event Type'] = 'Session';
             if(url_data['Event Type'].includes('Special Event')) data['Event Type'] = 'Special Event'
             data['Speakers'] = [];
-            if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
-            if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
+            data['Date'] = $('div.event-date').text().split('|')[0].trim();
+            data['Time'] = $('div.event-date').text().split('|')[1].trim();
             data['Venue'] = '';
             $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
@@ -294,8 +294,8 @@ day = String(day);
             data['Venue'] = '';
             $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
-            if($('div.event-date').exists()) data['Date'] = $('div.event-date').text().split('|')[0].trim();
-            if($('div.event-date').exists()) data['Time'] = $('div.event-date').text().split('|')[1].trim();
+            data['Date'] = $('div.event-date').text().split('|')[0].trim();
+            data['Time'] = $('div.event-date').text().split('|')[1].trim();
             data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
             data['Venue Address'] = $('div.venue-address').text();
             // get tags
