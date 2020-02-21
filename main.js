@@ -191,7 +191,7 @@ day = String(day);
             data['Venue'] = data['Venue'].trim()
             data['Date'] = $('div.event-date').text().split('|')[0].trim();
             data['Time'] = $('div.event-date').text().split('|')[1].trim();
-            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ','');
             data['Venue Address'] = $('div.venue-address').text();
             // get tags
             let tags = [];
@@ -232,7 +232,7 @@ day = String(day);
             data['Venue'] = '';
             $('.venue-title').find('a').each((i,el)=>{data['Venue']+=$(el).text()+' '})
             data['Venue'] = data['Venue'].trim()
-            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ','');
             data['Venue Address'] = $('div.venue-address').text();
             $('div.badge').each((idx,el)=>{
                 let tmp = {};
@@ -296,7 +296,7 @@ day = String(day);
             data['Venue'] = data['Venue'].trim()
             data['Date'] = $('div.event-date').text().split('|')[0].trim();
             data['Time'] = $('div.event-date').text().split('|')[1].trim();
-            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ');
+            data['Venue Size'] = $('div.venue-size').text().replace('Venue Size: ','');
             data['Venue Address'] = $('div.venue-address').text();
             // get tags
             let tags = [];
